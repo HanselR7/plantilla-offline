@@ -26,6 +26,14 @@ public class HealthResource {
         body.put("status", s.status());
         body.put("version", s.version());
         body.put("timestamp", s.timestamp().toString());
+        body.put("database", s.database());
+        if (s.server() != null) {
+            Map<String, Object> server = new LinkedHashMap<>();
+            server.put("installationId", s.server().installationId().toString());
+            server.put("name", s.server().name());
+            server.put("mode", s.server().mode());
+            body.put("server", server);
+        }
         return body;
     }
 }

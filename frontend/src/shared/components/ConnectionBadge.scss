@@ -1,0 +1,32 @@
+@use '../../styles/abstracts/variables' as *;
+
+.connection-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: $spacing-sm;
+    padding: 2px 12px;
+    border-radius: 12px;
+    font-size: 13px;
+    color: #fff;
+    line-height: 1.6;
+
+    &--local {
+        background: $color-success;
+    }
+
+    &--cloud {
+        background: $color-primary;
+    }
+
+    &--offline {
+        background: $color-danger;
+    }
+
+    &--checking {
+        background: $color-warning;
+    }
+
+    &__label {
+        font-weight: 600;
+    }
+}

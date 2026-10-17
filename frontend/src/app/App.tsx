@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 import { Layout, Typography } from 'antd'
 import { ConnectionBadge } from '../shared/components/ConnectionBadge'
 import { useConnectionStore } from '../core/connectivity/useConnectionStore'
+import { NotasPage } from '../features/notas/NotasPage'
 
 const { Header, Content } = Layout
 
@@ -17,7 +18,7 @@ export default function App() {
                 <ConnectionBadge />
             </Header>
             <Content style={{ padding: 24 }}>
-                <Typography.Title level={3}>Base lista</Typography.Title>
+                <NotasPage />
             </Content>
         </Layout>
     )

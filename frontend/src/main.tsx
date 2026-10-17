@@ -2,9 +2,10 @@ import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { ConfigProvider } from 'antd'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import App from './app/App'
+import { App as AntApp } from 'antd'
 import { theme } from './app/theme'
 import './styles/main.scss'
+import App from './app/App'
 
 const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false, refetchOnWindowFocus: false } },
@@ -14,7 +15,9 @@ createRoot(document.getElementById('root')!).render(
     <StrictMode>
         <ConfigProvider theme={theme}>
             <QueryClientProvider client={queryClient}>
-                <App />
+                <AntApp >
+                    <App />
+                </AntApp>
             </QueryClientProvider>
         </ConfigProvider>
     </StrictMode>,

@@ -1,11 +1,10 @@
-import { http } from '../../core/http/httpClient'
+import { v7 as uuidv7 } from 'uuid'
+import { http, write } from '../../core/http/httpClient'
 import type { Nota, NotaInput } from './types'
 
 export const notasApi = {
     listar: () => http<Nota[]>('/notas'),
-    crear: (data: NotaInput) =>
-        http<Nota>('/notas', { method: 'POST', body: JSON.stringify(data) }),
-    actualizar: (id: string, data: NotaInput) =>
-        http<Nota>(`/notas/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
-    eliminar: (id: string) => http<void>(`/notas/${id}`, { method: 'DELETE' }),
+    crear: (data: NotaInput) => write<Nota>('POST', '/notas', { id: uuidv7(), ...data }),
+    actualizar: (id: string, data: NotaInput) => write<Nota>('PUT', `/notas/${id}`, data),
+    eliminar: (id: string) => write<void>('DELETE', `/notas/${id}`),
 }

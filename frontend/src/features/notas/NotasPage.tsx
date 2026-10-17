@@ -1,13 +1,16 @@
 import { useState } from 'react'
-import { Alert, Button, Popconfirm, Space, Table, Typography, message } from 'antd'
+import { Alert, Button, Popconfirm, Space, Table, Typography } from 'antd'
 import { DeleteOutlined, EditOutlined, PlusOutlined } from '@ant-design/icons'
 import { useConnectionStore } from '../../core/connectivity/useConnectionStore'
 import { NotaFormModal } from './NotaFormModal'
 import { useEliminarNota, useGuardarNota, useNotas } from './useNotas'
 import type { Nota, NotaInput } from './types'
 import './NotasPage.scss'
+import { isQueued } from '../../core/http/httpClient'
+import useApp from 'antd/es/app/useApp'
 
 export function NotasPage() {
+    const { message } = useApp();
     const mode = useConnectionStore((s) => s.mode)
     const { data, isLoading } = useNotas()
     const guardar = useGuardarNota()
@@ -25,9 +28,9 @@ export function NotasPage() {
         guardar.mutate(
             { id: editando?.id, data: values },
             {
-                onSuccess: () => {
+                onSuccess: (result) => {
                     setModalOpen(false)
-                    void message.success('Nota guardada')
+                    void message.success(isQueued(result) ? 'Guardado sin conexión; se enviará al reconectar' : 'Nota guardada')
                 },
                 onError: (e) => void message.error(e.message),
             },
@@ -37,13 +40,18 @@ export function NotasPage() {
         <div className="notas-page">
             <div className="notas-page__header">
                 <Typography.Title level={3} style={{ margin: 0 }}>Notas</Typography.Title>
-                <Button type="primary" icon={<PlusOutlined />} disabled={mode === 'offline'} onClick={() => abrir(null)}>
+                <Button type="primary" icon={<PlusOutlined />} onClick={() => abrir(null)}>
                     Nueva nota
                 </Button>
             </div>
 
             {mode === 'offline' && (
-                <Alert type="warning" showIcon style={{ marginBottom: 16 }} message="Sin conexión: no se pueden cargar ni guardar notas todavía." />
+                <Alert
+                    type="info"
+                    showIcon
+                    style={{ marginBottom: 16 }}
+                    title="Sin conexión: los cambios se guardan en este dispositivo y se enviarán al reconectar."
+                />
             )}
 
             <Table<Nota>

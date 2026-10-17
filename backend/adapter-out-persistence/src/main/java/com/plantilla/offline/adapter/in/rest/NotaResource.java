@@ -41,7 +41,7 @@ public class NotaResource {
     @POST
     public Response crear(NotaDto dto) {
         try {
-            NotaDto creada = NotaDto.from(notas.crear(dto.titulo(), dto.contenido()));
+            NotaDto creada = NotaDto.from(notas.crear(dto.id(), dto.titulo(), dto.contenido()));
             return Response.status(Response.Status.CREATED).entity(creada).build();
         } catch (IllegalArgumentException e) {
             return Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build();

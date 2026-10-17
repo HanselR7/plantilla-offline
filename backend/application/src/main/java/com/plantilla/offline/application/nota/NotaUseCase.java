@@ -6,7 +6,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 public interface NotaUseCase {
-    Nota crear(String titulo, String contenido);
+    Nota crear(UUID id, String titulo, String contenido);
     Optional<Nota> actualizar(UUID id, String titulo, String contenido);
     Optional<Nota> obtener(UUID id);
     List<Nota> listar();

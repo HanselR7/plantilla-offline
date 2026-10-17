@@ -14,11 +14,18 @@ public class NotaService implements NotaUseCase {
     }
 
     @Override
-    public Nota crear(String titulo, String contenido) {
+    public Nota crear(UUID id, String titulo, String contenido) {
         if (titulo == null || titulo.isBlank()) {
             throw new IllegalArgumentException("El título es obligatorio");
         }
-        return repository.save(new Nota(null, titulo.trim(), contenido));
+        // Si el cliente ya envió esa nota antes (reintento), se devuelve la existente.
+        if (id != null) {
+            Optional<Nota> existente = repository.findById(id);
+            if (existente.isPresent()) {
+                return existente.get();
+            }
+        }
+        return repository.save(new Nota(id, titulo.trim(), contenido));
     }
 
     @Override

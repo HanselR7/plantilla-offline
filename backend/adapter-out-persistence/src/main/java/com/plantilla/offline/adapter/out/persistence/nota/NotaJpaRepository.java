@@ -11,6 +11,10 @@ import jakarta.transaction.Transactional;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import com.plantilla.offline.adapter.out.persistence.base.OutboxWriter;
+import jakarta.inject.Inject;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 @ApplicationScoped
 @Transactional
@@ -18,6 +22,9 @@ public class NotaJpaRepository implements NotaRepository {
 
     @PersistenceContext(unitName = "plantillaPU")
     private EntityManager em;
+
+    @Inject
+    private OutboxWriter outbox;
 
     private JpaRepositoryBase<NotaEntity> base;
 
@@ -35,7 +42,24 @@ public class NotaJpaRepository implements NotaRepository {
         }
         entity.setTitulo(nota.getTitulo());
         entity.setContenido(nota.getContenido());
-        return toDomain(base.saveEntity(entity));
+        NotaEntity saved = base.saveEntity(entity);
+
+        Map<String, Object> payload = new LinkedHashMap<>();
+        payload.put("id", saved.getId().toString());
+        payload.put("titulo", saved.getTitulo());
+        payload.put("contenido", saved.getContenido());
+        outbox.record("nota", saved.getId(), "UPSERT", payload);
+
+        return toDomain(saved);
+    }
+
+    @Override
+    public boolean softDelete(UUID id) {
+        boolean deleted = base.softDeleteEntity(id);
+        if (deleted) {
+            outbox.record("nota", id, "DELETE", Map.of("id", id.toString()));
+        }
+        return deleted;
     }
 
     @Override
@@ -46,11 +70,6 @@ public class NotaJpaRepository implements NotaRepository {
     @Override
     public List<Nota> findAll() {
         return base.findAllEntities().stream().map(this::toDomain).toList();
-    }
-
-    @Override
-    public boolean softDelete(UUID id) {
-        return base.softDeleteEntity(id);
     }
 
     private Nota toDomain(NotaEntity e) {

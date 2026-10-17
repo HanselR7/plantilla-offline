@@ -24,3 +24,7 @@ frontend/build/
 Thumbs.db
 .DS_Store
 "@ | Out-File -Encoding utf8 .gitignore
+
+# Frontend compilado copiado al WAR (generado)
+backend/bootstrap/src/main/webapp/*
+!backend/bootstrap/src/main/webapp/WEB-INF/

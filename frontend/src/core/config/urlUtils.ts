@@ -11,3 +11,10 @@ export function normalizeLocalUrl(input: string): string {
 export function normalizeCloudUrl(input: string): string {
     return input.trim().replace(/\/+$/, '')
 }
+
+/** Si la app se sirve desde el WAR (…/plantilla-api/), devuelve la API del mismo origen. */
+export function detectEmbeddedApiUrl(): string | null {
+    return window.location.pathname.startsWith('/plantilla-api')
+        ? `${window.location.origin}/plantilla-api/api`
+        : null
+}

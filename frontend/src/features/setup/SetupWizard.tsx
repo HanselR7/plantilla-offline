@@ -3,7 +3,7 @@ import { Alert, Button, Card, Form, Input, Typography } from 'antd'
 import { useSettingsStore } from '../../core/config/useSettingsStore'
 import type { AppRole } from '../../core/config/useSettingsStore'
 import { appConfig } from '../../core/config/appConfig'
-import { normalizeCloudUrl, normalizeLocalUrl } from '../../core/config/urlUtils'
+import { detectEmbeddedApiUrl, normalizeCloudUrl, normalizeLocalUrl } from '../../core/config/urlUtils'
 import { useConnectionStore } from '../../core/connectivity/useConnectionStore'
 import './SetupWizard.scss'
 
@@ -36,12 +36,13 @@ export function SetupWizard() {
     const configure = useSettingsStore((s) => s.configure)
     const [role, setRole] = useState<AppRole | null>(null)
     const [form] = Form.useForm<FormValues>()
+    const embeddedUrl = detectEmbeddedApiUrl()
 
     const onFinish = (values: FormValues) => {
         if (!role) return
         const cloudUrl = values.cloudUrl?.trim() ? normalizeCloudUrl(values.cloudUrl) : null
         let localUrl: string | null = null
-        if (role === 'server') localUrl = appConfig.defaultLocalUrl
+        if (role === 'server') localUrl = embeddedUrl ?? appConfig.defaultLocalUrl
         if (role === 'client' && values.localUrl?.trim()) localUrl = normalizeLocalUrl(values.localUrl)
 
         configure({ role, localUrl, cloudUrl })
@@ -90,11 +91,15 @@ export function SetupWizard() {
                     type="info"
                     showIcon
                     style={{ marginBottom: 16 }}
-                    title="Más adelante el servidor se descubrirá solo o con un QR. Por ahora, escribe su dirección."
+                    title={
+                        embeddedUrl
+                            ? 'Detectamos el servidor desde el que abriste esta app. Confirma la dirección o cámbiala.'
+                            : 'Más adelante el servidor se descubrirá solo o con un QR. Por ahora, escribe su dirección.'
+                    }
                 />
             )}
 
-            <Form form={form} layout="vertical" onFinish={onFinish}>
+            <Form form={form} layout="vertical" onFinish={onFinish} initialValues={{ localUrl: embeddedUrl ?? undefined }}>
                 {role === 'client' && (
                     <Form.Item
                         name="localUrl"

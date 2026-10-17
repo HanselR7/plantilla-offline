@@ -8,6 +8,7 @@ import { useSettingsStore } from '../core/config/useSettingsStore'
 import { useOfflineSync } from '../core/offline/useOfflineSync'
 import { NotasPage } from '../features/notas/NotasPage'
 import { SetupWizard } from '../features/setup/SetupWizard'
+import { PairDevicePanel } from '../features/setup/PairDevicePanel'
 
 const { Header, Content } = Layout
 
@@ -36,6 +37,7 @@ export default function App() {
                 <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                     <PendingBadge />
                     <ConnectionBadge />
+                    {role === 'server' && <PairDevicePanel />}
                     <Popconfirm
                         title="¿Volver a configurar este dispositivo?"
                         description="Los cambios pendientes de envío se conservan."

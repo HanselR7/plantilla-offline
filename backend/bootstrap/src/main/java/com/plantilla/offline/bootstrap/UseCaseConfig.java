@@ -9,6 +9,9 @@ import com.plantilla.offline.application.nota.NotaUseCase;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.inject.Produces;
 import jakarta.inject.Inject;
+import com.plantilla.offline.adapter.out.persistence.pairing.PairingJpaAdapter;
+import com.plantilla.offline.application.pairing.PairingService;
+import com.plantilla.offline.application.pairing.PairingUseCase;
 
 @ApplicationScoped
 public class UseCaseConfig {
@@ -18,6 +21,9 @@ public class UseCaseConfig {
 
     @Inject
     ServerInfoJpaAdapter serverInfo;
+
+    @Inject
+    PairingJpaAdapter pairingRepository;
 
     @Produces
     @ApplicationScoped
@@ -29,5 +35,11 @@ public class UseCaseConfig {
     @ApplicationScoped
     public NotaUseCase notaUseCase() {
         return new NotaService(notaRepository);
+    }
+
+    @Produces
+    @ApplicationScoped
+    public PairingUseCase pairingUseCase() {
+        return new PairingService(pairingRepository);
     }
 }

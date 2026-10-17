@@ -5,11 +5,14 @@ import type { AppRole } from '../../core/config/useSettingsStore'
 import { appConfig } from '../../core/config/appConfig'
 import { detectEmbeddedApiUrl, normalizeCloudUrl, normalizeLocalUrl } from '../../core/config/urlUtils'
 import { useConnectionStore } from '../../core/connectivity/useConnectionStore'
+import { redeemPairingCode } from './pairingApi'
 import './SetupWizard.scss'
+import useApp from 'antd/es/app/useApp'
 
 interface FormValues {
     localUrl?: string
     cloudUrl?: string
+    pairCode?: string
 }
 
 const OPTIONS: { role: AppRole; title: string; text: string }[] = [
@@ -33,19 +36,37 @@ const OPTIONS: { role: AppRole; title: string; text: string }[] = [
 const isHttpUrl = (value: string) => /^https?:\/\/\S+$/i.test(value.trim())
 
 export function SetupWizard() {
+    const { message } = useApp();
     const configure = useSettingsStore((s) => s.configure)
     const [role, setRole] = useState<AppRole | null>(null)
     const [form] = Form.useForm<FormValues>()
     const embeddedUrl = detectEmbeddedApiUrl()
 
-    const onFinish = (values: FormValues) => {
+    const onFinish = async (values: FormValues) => {
         if (!role) return
-        const cloudUrl = values.cloudUrl?.trim() ? normalizeCloudUrl(values.cloudUrl) : null
+        let cloudUrl = values.cloudUrl?.trim() ? normalizeCloudUrl(values.cloudUrl) : null
         let localUrl: string | null = null
-        if (role === 'server') localUrl = embeddedUrl ?? appConfig.defaultLocalUrl
-        if (role === 'client' && values.localUrl?.trim()) localUrl = normalizeLocalUrl(values.localUrl)
+        let deviceId: string | null = null
+        let deviceToken: string | null = null
 
-        configure({ role, localUrl, cloudUrl })
+        if (role === 'server') localUrl = embeddedUrl ?? appConfig.defaultLocalUrl
+
+        if (role === 'client') {
+            localUrl = normalizeLocalUrl(values.localUrl ?? '')
+            if (values.pairCode?.trim()) {
+                try {
+                    const paired = await redeemPairingCode(localUrl, values.pairCode, navigator.userAgent.slice(0, 60))
+                    deviceId = paired.deviceId
+                    deviceToken = paired.deviceToken
+                    cloudUrl = cloudUrl ?? paired.cloudUrl
+                } catch (e) {
+                    void message.error((e as Error).message)
+                    return
+                }
+            }
+        }
+
+        configure({ role, localUrl, cloudUrl, deviceId, deviceToken })
         void useConnectionStore.getState().refresh()
     }
 
@@ -108,6 +129,16 @@ export function SetupWizard() {
                         rules={[{ required: true, message: 'Escribe la dirección del servidor' }]}
                     >
                         <Input placeholder="192.168.1.45" />
+                    </Form.Item>
+                )}
+
+                {role === 'client' && (
+                    <Form.Item
+                        name="pairCode"
+                        label="Código de emparejamiento"
+                        extra="Se muestra en el servidor, en «Emparejar dispositivo». Es opcional por ahora."
+                    >
+                        <Input placeholder="ABCD2345" maxLength={8} style={{ textTransform: 'uppercase' }} />
                     </Form.Item>
                 )}
 

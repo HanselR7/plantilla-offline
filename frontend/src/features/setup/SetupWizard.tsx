@@ -8,6 +8,8 @@ import { useConnectionStore } from '../../core/connectivity/useConnectionStore'
 import { redeemPairingCode } from './pairingApi'
 import './SetupWizard.scss'
 import useApp from 'antd/es/app/useApp'
+import { discoverServer, rememberServer } from '../../core/connectivity/discovery'
+import { Progress } from 'antd'
 
 interface FormValues {
     localUrl?: string
@@ -41,6 +43,27 @@ export function SetupWizard() {
     const [role, setRole] = useState<AppRole | null>(null)
     const [form] = Form.useForm<FormValues>()
     const embeddedUrl = detectEmbeddedApiUrl()
+    const [searching, setSearching] = useState(false)
+    const [step, setStep] = useState('')
+    const [progress, setProgress] = useState(0)
+    const [subnet, setSubnet] = useState('')
+
+    const search = async () => {
+        setSearching(true)
+        setProgress(0)
+        const found = await discoverServer({
+            subnetPrefix: subnet.trim() || undefined,
+            onStep: setStep,
+            onProgress: (n) => setProgress(Math.round((n / 254) * 100)),
+        })
+        setSearching(false)
+        if (found) {
+            form.setFieldValue('localUrl', found.apiUrl)
+            void message.success(`Servidor encontrado: ${found.health.server?.name ?? found.apiUrl}`)
+        } else {
+            void message.warning('No se encontró el servidor. Escribe su dirección o indica tu red.')
+        }
+    }
 
     const onFinish = async (values: FormValues) => {
         if (!role) return
@@ -67,6 +90,7 @@ export function SetupWizard() {
         }
 
         configure({ role, localUrl, cloudUrl, deviceId, deviceToken })
+        if (localUrl) rememberServer(localUrl)
         void useConnectionStore.getState().refresh()
     }
 
@@ -121,6 +145,26 @@ export function SetupWizard() {
             )}
 
             <Form form={form} layout="vertical" onFinish={onFinish} initialValues={{ localUrl: embeddedUrl ?? undefined }}>
+                {role === 'client' && (
+                    <div style={{ marginBottom: 16 }}>
+                        <Button onClick={() => void search()} loading={searching}>
+                            Buscar servidor automáticamente
+                        </Button>
+                        {searching && (
+                            <div style={{ marginTop: 8 }}>
+                                <Typography.Text type="secondary">{step}</Typography.Text>
+                                {progress > 0 && <Progress percent={progress} size="small" />}
+                            </div>
+                        )}
+                        <Input
+                            style={{ marginTop: 8 }}
+                            placeholder="Opcional: tu red, ej. 192.168.1 (para escanear)"
+                            value={subnet}
+                            onChange={(e) => setSubnet(e.target.value)}
+                        />
+                    </div>
+                )}
+
                 {role === 'client' && (
                     <Form.Item
                         name="localUrl"

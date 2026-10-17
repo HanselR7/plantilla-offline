@@ -2,9 +2,9 @@ import { appConfig } from '../config/appConfig'
 import type { ServerHealth } from './types'
 
 /** Consulta /health con tiempo límite. Devuelve null si no responde o está degradado. */
-export async function checkHealth(apiUrl: string): Promise<ServerHealth | null> {
+export async function checkHealth(apiUrl: string, timeoutMs = appConfig.healthTimeoutMs): Promise<ServerHealth | null> {
     const controller = new AbortController()
-    const timer = setTimeout(() => controller.abort(), appConfig.healthTimeoutMs)
+    const timer = setTimeout(() => controller.abort(), timeoutMs)
     try {
         const res = await fetch(`${apiUrl}/health`, { signal: controller.signal })
         if (!res.ok) return null

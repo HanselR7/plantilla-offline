@@ -12,3 +12,9 @@
 - [ ] Contraseñas aleatorias por instalación (PostgreSQL, keystore, tokens)
 - [ ] Autenticación de usuarios y de /pairing/codes (hoy abierto)
 - [ ] Reemplazar JBoss EAP por WildFly si no habrá suscripción de Red Hat
+- [ ] Cambiar la contraseña de un usuario (hoy no hay endpoint).
+- [ ] Bloqueo o límite de intentos de login fallidos.
+- [ ] Limpieza de sesiones vencidas en auth_session.
+- [ ] Sincronizar usuarios entre nube y local, para que sean las mismas credenciales.
+- [ ] Los tokens van en localStorage. En una app offline-first es lo habitual, pero un XSS los expondría, así que conviene un buen CSP más adelante.
+- [ ] /sync/push y /sync/pull abiertos (el 22B).

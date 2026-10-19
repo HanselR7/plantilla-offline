@@ -1,12 +1,14 @@
 import { useEffect } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
+import { useCurrentSession } from '../auth/useCurrentSession'
 import { useConnectionStore } from '../connectivity/useConnectionStore'
 import { processQueue } from './queueProcessor'
 import { useQueueStore } from './useQueueStore'
 
-/** Al recuperar conexión (local o nube), vacía la cola y refresca los datos. */
+/** Al recuperar conexión o iniciar sesión, vacía la cola y refresca los datos. */
 export function useOfflineSync() {
     const apiUrl = useConnectionStore((s) => s.apiUrl)
+    const loggedIn = useCurrentSession() !== null
     const refreshCount = useQueueStore((s) => s.refreshCount)
     const queryClient = useQueryClient()
 
@@ -15,7 +17,7 @@ export function useOfflineSync() {
     }, [refreshCount])
 
     useEffect(() => {
-        if (!apiUrl) return
+        if (!apiUrl || !loggedIn) return
         void processQueue().then(() => queryClient.invalidateQueries())
-    }, [apiUrl, queryClient])
+    }, [apiUrl, loggedIn, queryClient])
 }

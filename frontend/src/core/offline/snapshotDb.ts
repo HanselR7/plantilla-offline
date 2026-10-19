@@ -8,4 +8,7 @@ export const snapshotDb = {
         const row = await (await dbPromise).get('snapshots', key)
         return row ? (row.data as T) : null
     },
+    async clear() {
+        await (await dbPromise).clear('snapshots')
+    },
 }

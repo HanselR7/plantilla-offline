@@ -31,7 +31,7 @@ public class SyncResource {
     @Inject
     SyncChangesUseCase changes;
 
-    /** TODO (paso de seguridad): autenticar la instalación que envía el lote. Hoy está abierto. */
+    @Public
     @POST
     @Path("/push")
     @Transactional
@@ -43,7 +43,7 @@ public class SyncResource {
         return Response.ok(Map.of("confirmed", confirmed)).build();
     }
 
-    /** TODO (paso de seguridad): autenticar la instalación que consulta. Hoy está abierto. */
+    @Public
     @GET
     @Path("/pull")
     public Response pull(@QueryParam("type") String type,

@@ -26,7 +26,7 @@ public class PairingResource {
     @Inject
     PairingUseCase pairing;
 
-    /** TODO (paso de seguridad): exigir sesión de administrador. Hoy está abierto. */
+    @RequireRole("ADMIN")
     @POST
     @Path("/codes")
     public Response createCode() {
@@ -37,6 +37,7 @@ public class PairingResource {
         return Response.status(Response.Status.CREATED).entity(body).build();
     }
 
+    @Public
     @POST
     @Path("/redeem")
     public Response redeem(RedeemRequest req) {

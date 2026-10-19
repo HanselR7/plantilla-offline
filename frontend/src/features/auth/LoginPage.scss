@@ -1,0 +1,11 @@
+@use '../../styles/abstracts/variables' as *;
+
+.login-page {
+    max-width: 400px;
+    margin: 10vh auto 0;
+    padding: $spacing-lg;
+
+    &__hint {
+        margin-bottom: $spacing-md;
+    }
+}

@@ -1,10 +1,11 @@
+import { authFetch } from '../auth/authFetch'
 import { useConnectionStore } from '../connectivity/useConnectionStore'
 import { queueDb } from './queueDb'
 import { useQueueStore } from './useQueueStore'
 
 let running = false
 
-/** Envía la cola en orden. Se detiene al primer fallo de red para conservar el orden. */
+/** Envía la cola en orden. Se detiene ante un fallo recuperable para conservar el orden. */
 export async function processQueue(): Promise<void> {
     if (running) return
     const { apiUrl } = useConnectionStore.getState()
@@ -15,18 +16,18 @@ export async function processQueue(): Promise<void> {
     try {
         for (const op of await queueDb.all()) {
             try {
-                const res = await fetch(`${apiUrl}${op.path}`, {
+                const res = await authFetch(`${apiUrl}${op.path}`, {
                     method: op.method,
                     headers: { 'Content-Type': 'application/json', 'Idempotency-Key': op.id },
                     body: op.body,
                 })
-                // 404 al borrar o editar algo ya inexistente: se da por resuelto.
                 if (res.ok || res.status === 404) {
+                    // 404 al borrar o editar algo ya inexistente: se da por resuelto.
                     await queueDb.remove(op.id)
+                } else if (res.status === 401) {
+                    break // sin sesión válida: se conserva todo hasta que el usuario inicie sesión
                 } else if (res.status >= 400 && res.status < 500) {
-                    // Rechazada por el servidor (datos inválidos): no sirve reintentarla.
-                    await queueDb.update({ ...op, attempts: op.attempts + 1, lastError: `HTTP ${res.status}` })
-                    await queueDb.remove(op.id)
+                    await queueDb.remove(op.id) // rechazada por datos inválidos: no sirve reintentarla
                 } else {
                     break // error del servidor: reintentar luego
                 }

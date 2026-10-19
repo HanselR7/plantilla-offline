@@ -1,3 +1,5 @@
+import { authFetch } from "../../core/auth/authFetch"
+
 export interface PairingResult {
     deviceId: string
     deviceToken: string
@@ -9,9 +11,9 @@ export interface PairingCode {
     expiresAt: string
 }
 
-/** El servidor local es el que emite y canjea códigos; por eso se le llama directo. */
 export async function createPairingCode(apiUrl: string): Promise<PairingCode> {
-    const res = await fetch(`${apiUrl}/pairing/codes`, { method: 'POST' })
+    const res = await authFetch(`${apiUrl}/pairing/codes`, { method: 'POST' })
+    if (res.status === 403) throw new Error('Solo un administrador puede emparejar dispositivos')
     if (!res.ok) throw new Error('No se pudo generar el código')
     return (await res.json()) as PairingCode
 }

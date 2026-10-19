@@ -18,6 +18,7 @@ public class HealthResource {
     @Inject
     HealthUseCase healthUseCase;
 
+    @Public
     @GET
     @Produces(MediaType.APPLICATION_JSON)
     public Map<String, Object> health() {

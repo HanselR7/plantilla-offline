@@ -1,4 +1,5 @@
 import { v7 as uuidv7 } from 'uuid'
+import { authFetch } from '../auth/authFetch'
 import { useConnectionStore } from '../connectivity/useConnectionStore'
 import { queueDb } from '../offline/queueDb'
 import { useQueueStore } from '../offline/useQueueStore'
@@ -19,7 +20,7 @@ export async function http<T>(path: string, init?: RequestInit): Promise<T> {
     const { apiUrl } = useConnectionStore.getState()
     if (!apiUrl) throw new OfflineError()
 
-    const res = await fetch(`${apiUrl}${path}`, {
+    const res = await authFetch(`${apiUrl}${path}`, {
         ...init,
         headers: { 'Content-Type': 'application/json', ...init?.headers },
     })
@@ -31,7 +32,7 @@ export async function http<T>(path: string, init?: RequestInit): Promise<T> {
     return res.status === 204 ? (undefined as T) : ((await res.json()) as T)
 }
 
-/** Escritura con respaldo offline: si no hay servidor, se guarda en la cola. */
+/** Escritura con respaldo offline: si no hay servidor o la sesión venció, se guarda en la cola. */
 export async function write<T>(
     method: 'POST' | 'PUT' | 'DELETE',
     path: string,
@@ -43,15 +44,18 @@ export async function write<T>(
     const { apiUrl } = useConnectionStore.getState()
     if (apiUrl) {
         try {
-            const res = await fetch(`${apiUrl}${path}`, {
+            const res = await authFetch(`${apiUrl}${path}`, {
                 method,
                 headers: { 'Content-Type': 'application/json', 'Idempotency-Key': idempotencyKey },
                 body: payload,
             })
-            if (!res.ok) {
+            if (res.ok) {
+                return res.status === 204 ? (undefined as T) : ((await res.json()) as T)
+            }
+            // 401: la sesión terminó. La operación se conserva y se envía tras iniciar sesión.
+            if (res.status !== 401) {
                 throw new Error((await res.text()) || `Error ${res.status}`)
             }
-            return res.status === 204 ? (undefined as T) : ((await res.json()) as T)
         } catch (e) {
             // Error de negocio del servidor: se muestra. Error de red: se encola.
             if (!(e instanceof TypeError)) throw e

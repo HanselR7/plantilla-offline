@@ -22,6 +22,9 @@ import com.plantilla.offline.application.sync.SyncApplyService;
 import com.plantilla.offline.application.sync.SyncApplyUseCase;
 import com.plantilla.offline.application.sync.SyncChangesService;
 import com.plantilla.offline.application.sync.SyncChangesUseCase;
+import com.plantilla.offline.adapter.out.persistence.auth.AuthJpaAdapter;
+import com.plantilla.offline.application.auth.AuthService;
+import com.plantilla.offline.application.auth.AuthUseCase;
 
 @ApplicationScoped
 public class UseCaseConfig {
@@ -43,6 +46,9 @@ public class UseCaseConfig {
 
     @Inject
     SyncLocalStateAdapter syncLocalState;
+
+    @Inject
+    AuthJpaAdapter authRepository;
 
     @Produces
     @ApplicationScoped
@@ -78,5 +84,11 @@ public class UseCaseConfig {
     @ApplicationScoped
     public SyncApplyUseCase syncApplyUseCase() {
         return new SyncApplyService(syncHandlers.stream().toList(), syncLocalState, syncLocalState);
+    }
+
+    @Produces
+    @ApplicationScoped
+    public AuthUseCase authUseCase() {
+        return new AuthService(authRepository);
     }
 }

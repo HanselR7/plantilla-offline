@@ -12,6 +12,11 @@ import jakarta.inject.Inject;
 import com.plantilla.offline.adapter.out.persistence.pairing.PairingJpaAdapter;
 import com.plantilla.offline.application.pairing.PairingService;
 import com.plantilla.offline.application.pairing.PairingUseCase;
+import com.plantilla.offline.adapter.out.persistence.sync.ProcessedOperationJpaAdapter;
+import com.plantilla.offline.application.sync.SyncHandler;
+import com.plantilla.offline.application.sync.SyncPushService;
+import com.plantilla.offline.application.sync.SyncPushUseCase;
+import jakarta.enterprise.inject.Instance;
 
 @ApplicationScoped
 public class UseCaseConfig {
@@ -24,6 +29,12 @@ public class UseCaseConfig {
 
     @Inject
     PairingJpaAdapter pairingRepository;
+
+    @Inject
+    Instance<SyncHandler> syncHandlers;
+
+    @Inject
+    ProcessedOperationJpaAdapter processedOperations;
 
     @Produces
     @ApplicationScoped
@@ -41,5 +52,11 @@ public class UseCaseConfig {
     @ApplicationScoped
     public PairingUseCase pairingUseCase() {
         return new PairingService(pairingRepository);
+    }
+
+    @Produces
+    @ApplicationScoped
+    public SyncPushUseCase syncPushUseCase() {
+        return new SyncPushService(syncHandlers.stream().toList(), processedOperations);
     }
 }

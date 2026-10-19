@@ -10,6 +10,7 @@ export function useNotas() {
     return useQuery({
         queryKey: [...KEY, apiUrl],
         queryFn: notasApi.listar,
+        refetchInterval: apiUrl ? 15000 : false,
     })
 }
 

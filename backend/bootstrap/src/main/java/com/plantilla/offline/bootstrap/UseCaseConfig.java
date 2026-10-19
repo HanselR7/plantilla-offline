@@ -17,6 +17,11 @@ import com.plantilla.offline.application.sync.SyncHandler;
 import com.plantilla.offline.application.sync.SyncPushService;
 import com.plantilla.offline.application.sync.SyncPushUseCase;
 import jakarta.enterprise.inject.Instance;
+import com.plantilla.offline.adapter.out.persistence.sync.SyncLocalStateAdapter;
+import com.plantilla.offline.application.sync.SyncApplyService;
+import com.plantilla.offline.application.sync.SyncApplyUseCase;
+import com.plantilla.offline.application.sync.SyncChangesService;
+import com.plantilla.offline.application.sync.SyncChangesUseCase;
 
 @ApplicationScoped
 public class UseCaseConfig {
@@ -35,6 +40,9 @@ public class UseCaseConfig {
 
     @Inject
     ProcessedOperationJpaAdapter processedOperations;
+
+    @Inject
+    SyncLocalStateAdapter syncLocalState;
 
     @Produces
     @ApplicationScoped
@@ -58,5 +66,17 @@ public class UseCaseConfig {
     @ApplicationScoped
     public SyncPushUseCase syncPushUseCase() {
         return new SyncPushService(syncHandlers.stream().toList(), processedOperations);
+    }
+
+    @Produces
+    @ApplicationScoped
+    public SyncChangesUseCase syncChangesUseCase() {
+        return new SyncChangesService(syncHandlers.stream().toList());
+    }
+
+    @Produces
+    @ApplicationScoped
+    public SyncApplyUseCase syncApplyUseCase() {
+        return new SyncApplyService(syncHandlers.stream().toList(), syncLocalState, syncLocalState);
     }
 }

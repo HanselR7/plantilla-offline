@@ -14,6 +14,10 @@ import jakarta.ws.rs.core.Response;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import com.plantilla.offline.application.sync.SyncChangesUseCase;
+import jakarta.ws.rs.DefaultValue;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.QueryParam;
 
 @Path("/sync")
 @RequestScoped
@@ -23,6 +27,9 @@ public class SyncResource {
 
     @Inject
     SyncPushUseCase push;
+
+    @Inject
+    SyncChangesUseCase changes;
 
     /** TODO (paso de seguridad): autenticar la instalación que envía el lote. Hoy está abierto. */
     @POST
@@ -34,5 +41,16 @@ public class SyncResource {
         }
         List<UUID> confirmed = push.push(batch);
         return Response.ok(Map.of("confirmed", confirmed)).build();
+    }
+
+    /** TODO (paso de seguridad): autenticar la instalación que consulta. Hoy está abierto. */
+    @GET
+    @Path("/pull")
+    public Response pull(@QueryParam("type") String type,
+                         @QueryParam("since") @DefaultValue("0") long since,
+                         @QueryParam("limit") @DefaultValue("100") int limit) {
+        return changes.changes(type, since, limit)
+                .map(page -> Response.ok(page).build())
+                .orElse(Response.status(Response.Status.NOT_FOUND).entity("Tipo desconocido").build());
     }
 }

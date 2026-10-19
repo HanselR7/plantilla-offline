@@ -8,7 +8,10 @@ import './styles/main.scss'
 import App from './app/App'
 
 const queryClient = new QueryClient({
-    defaultOptions: { queries: { retry: false, refetchOnWindowFocus: false } },
+    defaultOptions: {
+        queries: { retry: false, refetchOnWindowFocus: false, networkMode: 'always' },
+        mutations: { networkMode: 'always' },
+    },
 })
 
 createRoot(document.getElementById('root')!).render(

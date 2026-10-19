@@ -1,31 +1,7 @@
-import { openDB } from 'idb'
-import type { DBSchema } from 'idb'
+import { dbPromise } from './db'
+import type { QueuedOperation } from './db'
 
-export interface QueuedOperation {
-    /** Clave de idempotencia de la operación. */
-    id: string
-    method: 'POST' | 'PUT' | 'DELETE'
-    path: string
-    body: string | null
-    createdAt: number
-    attempts: number
-    lastError?: string
-}
-
-interface QueueSchema extends DBSchema {
-    operations: {
-        key: string
-        value: QueuedOperation
-        indexes: { 'by-created': number }
-    }
-}
-
-const dbPromise = openDB<QueueSchema>('plantilla-offline', 1, {
-    upgrade(db) {
-        const store = db.createObjectStore('operations', { keyPath: 'id' })
-        store.createIndex('by-created', 'createdAt')
-    },
-})
+export type { QueuedOperation }
 
 export const queueDb = {
     async add(op: QueuedOperation) {

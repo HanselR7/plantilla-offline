@@ -10,7 +10,6 @@ export function useNotas() {
     return useQuery({
         queryKey: [...KEY, apiUrl],
         queryFn: notasApi.listar,
-        enabled: apiUrl !== null,
     })
 }
 

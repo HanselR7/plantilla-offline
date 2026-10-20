@@ -25,6 +25,9 @@ import com.plantilla.offline.application.sync.SyncChangesUseCase;
 import com.plantilla.offline.adapter.out.persistence.auth.AuthJpaAdapter;
 import com.plantilla.offline.application.auth.AuthService;
 import com.plantilla.offline.application.auth.AuthUseCase;
+import com.plantilla.offline.adapter.out.persistence.syncauth.SyncClientJpaAdapter;
+import com.plantilla.offline.application.syncauth.SyncClientService;
+import com.plantilla.offline.application.syncauth.SyncClientUseCase;
 
 @ApplicationScoped
 public class UseCaseConfig {
@@ -49,6 +52,9 @@ public class UseCaseConfig {
 
     @Inject
     AuthJpaAdapter authRepository;
+
+    @Inject
+    SyncClientJpaAdapter syncClientRepository;
 
     @Produces
     @ApplicationScoped
@@ -90,5 +96,11 @@ public class UseCaseConfig {
     @ApplicationScoped
     public AuthUseCase authUseCase() {
         return new AuthService(authRepository);
+    }
+
+    @Produces
+    @ApplicationScoped
+    public SyncClientUseCase syncClientUseCase() {
+        return new SyncClientService(syncClientRepository);
     }
 }

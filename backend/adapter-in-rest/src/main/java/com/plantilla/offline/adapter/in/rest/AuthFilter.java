@@ -2,6 +2,7 @@ package com.plantilla.offline.adapter.in.rest;
 
 import com.plantilla.offline.application.auth.AuthUseCase;
 import com.plantilla.offline.application.auth.AuthUser;
+import com.plantilla.offline.application.syncauth.SyncClientUseCase;
 import jakarta.annotation.Priority;
 import jakarta.enterprise.inject.spi.CDI;
 import jakarta.ws.rs.Priorities;
@@ -14,13 +15,20 @@ import jakarta.ws.rs.core.Response;
 import jakarta.ws.rs.ext.Provider;
 import java.lang.reflect.Method;
 import java.util.Optional;
+import java.util.UUID;
 
-/** Exige sesión en todo endpoint que no esté marcado @Public, y comprueba @RequireRole. */
+/**
+ * Exige credenciales en todo endpoint que no esté marcado @Public.
+ * - @SyncAuth: credencial de instalación (Bearer + X-Installation-Id).
+ * - Resto: sesión de usuario, con @RequireRole opcional.
+ */
 @Provider
 @Priority(Priorities.AUTHENTICATION)
 public class AuthFilter implements ContainerRequestFilter {
 
     public static final String USER_PROPERTY = "plantilla.auth.user";
+    public static final String INSTALLATION_PROPERTY = "plantilla.auth.installation";
+    public static final String INSTALLATION_HEADER = "X-Installation-Id";
 
     @Context
     private ResourceInfo resourceInfo;
@@ -38,6 +46,12 @@ public class AuthFilter implements ContainerRequestFilter {
             deny(ctx, Response.Status.UNAUTHORIZED, "No autenticado");
             return;
         }
+
+        if (method.isAnnotationPresent(SyncAuth.class) || type.isAnnotationPresent(SyncAuth.class)) {
+            authenticateInstallation(ctx, token);
+            return;
+        }
+
         // Búsqueda programática: los filtros JAX-RS no son beans CDI en este despliegue.
         AuthUseCase auth = CDI.current().select(AuthUseCase.class).get();
         Optional<AuthUser> user = auth.authenticate(token);
@@ -55,6 +69,22 @@ public class AuthFilter implements ContainerRequestFilter {
             return;
         }
         ctx.setProperty(USER_PROPERTY, user.get());
+    }
+
+    private void authenticateInstallation(ContainerRequestContext ctx, String token) {
+        UUID installationId;
+        try {
+            installationId = UUID.fromString(String.valueOf(ctx.getHeaderString(INSTALLATION_HEADER)).trim());
+        } catch (IllegalArgumentException e) {
+            deny(ctx, Response.Status.UNAUTHORIZED, "Instalación no identificada");
+            return;
+        }
+        SyncClientUseCase clients = CDI.current().select(SyncClientUseCase.class).get();
+        if (!clients.authenticate(installationId, token)) {
+            deny(ctx, Response.Status.UNAUTHORIZED, "Credencial de instalación inválida");
+            return;
+        }
+        ctx.setProperty(INSTALLATION_PROPERTY, installationId);
     }
 
     static String bearer(String header) {

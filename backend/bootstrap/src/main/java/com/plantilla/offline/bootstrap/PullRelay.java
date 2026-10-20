@@ -59,12 +59,16 @@ public class PullRelay {
             return;
         }
         try {
-            String cloudUrl = readCloudUrl();
-            if (cloudUrl == null || cloudUrl.isBlank()) {
+            String[] cloud = readCloud();
+            if (cloud == null || cloud[0] == null || cloud[0].isBlank()) {
                 return; // sin nube configurada
             }
+            if (cloud[2] == null || cloud[2].isBlank()) {
+                LOG.warning("Relé de bajada: falta installation.sync_token");
+                return;
+            }
             for (String type : apply.types()) {
-                pullType(cloudUrl, type);
+                pullType(cloud[0], cloud[1], cloud[2], type);
             }
         } catch (Exception e) {
             LOG.log(Level.WARNING, "Relé de bajada: " + e.getMessage());
@@ -72,12 +76,14 @@ public class PullRelay {
     }
 
     @SuppressWarnings("unchecked")
-    private void pullType(String cloudUrl, String type) throws Exception {
+    private void pullType(String cloudUrl, String installationId, String syncToken, String type) throws Exception {
         for (int page = 0; page < MAX_PAGES_PER_RUN; page++) {
             long since = inTx(() -> apply.lastVersion(type));
 
             HttpRequest request = HttpRequest.newBuilder(URI.create(
                             cloudUrl + "/sync/pull?type=" + type + "&since=" + since + "&limit=" + PAGE_SIZE))
+                    .header("Authorization", "Bearer " + syncToken)
+                    .header("X-Installation-Id", installationId)
                     .timeout(Duration.ofSeconds(15))
                     .GET()
                     .build();
@@ -113,11 +119,12 @@ public class PullRelay {
         }
     }
 
-    private String readCloudUrl() throws Exception {
+    /** {cloud_url, id, sync_token} */
+    private String[] readCloud() throws Exception {
         try (Connection c = dataSource.getConnection();
-             PreparedStatement ps = c.prepareStatement("select cloud_url from installation limit 1");
+             PreparedStatement ps = c.prepareStatement("select cloud_url, id, sync_token from installation limit 1");
              ResultSet rs = ps.executeQuery()) {
-            return rs.next() ? rs.getString(1) : null;
+            return rs.next() ? new String[]{rs.getString(1), rs.getString(2), rs.getString(3)} : null;
         }
     }
 

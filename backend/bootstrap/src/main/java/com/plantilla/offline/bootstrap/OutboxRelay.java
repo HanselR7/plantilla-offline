@@ -49,14 +49,19 @@ public class OutboxRelay {
             String[] installation = readInstallation(c);
             String installationId = installation[0];
             String cloudUrl = installation[1];
+            String syncToken = installation[2];
             if (cloudUrl == null || cloudUrl.isBlank()) {
                 return; // sin nube configurada: nada que enviar
+            }
+            if (syncToken == null || syncToken.isBlank()) {
+                LOG.warning("Relé del outbox: falta installation.sync_token, no se envía nada");
+                return;
             }
             List<Pending> pending = readPending(c);
             if (pending.isEmpty()) {
                 return;
             }
-            send(c, installationId, cloudUrl, pending);
+            send(c, installationId, cloudUrl, syncToken, pending);
         } catch (Exception e) {
             LOG.log(Level.WARNING, "Relé del outbox: " + e.getMessage());
         }
@@ -67,10 +72,10 @@ public class OutboxRelay {
     }
 
     private String[] readInstallation(Connection c) throws SQLException {
-        try (PreparedStatement ps = c.prepareStatement("select id, cloud_url from installation limit 1");
+        try (PreparedStatement ps = c.prepareStatement("select id, cloud_url, sync_token from installation limit 1");
              ResultSet rs = ps.executeQuery()) {
             rs.next();
-            return new String[]{rs.getString(1), rs.getString(2)};
+            return new String[]{rs.getString(1), rs.getString(2), rs.getString(3)};
         }
     }
 
@@ -88,7 +93,7 @@ public class OutboxRelay {
     }
 
     @SuppressWarnings("unchecked")
-    private void send(Connection c, String installationId, String cloudUrl, List<Pending> pending) throws Exception {
+    private void send(Connection c, String installationId, String cloudUrl, String syncToken, List<Pending> pending) throws Exception {
         List<Map<String, Object>> ops = new ArrayList<>();
         for (Pending p : pending) {
             ops.add(Map.of(
@@ -103,12 +108,18 @@ public class OutboxRelay {
         HttpRequest request = HttpRequest.newBuilder(URI.create(cloudUrl + "/sync/push"))
                 .timeout(Duration.ofSeconds(15))
                 .header("Content-Type", "application/json")
+                .header("Authorization", "Bearer " + syncToken)
+                .header("X-Installation-Id", installationId)
                 .POST(HttpRequest.BodyPublishers.ofString(body))
                 .build();
 
         HttpResponse<String> response = http.send(request, HttpResponse.BodyHandlers.ofString());
         if (response.statusCode() != 200) {
-            markFailed(c, pending, "HTTP " + response.statusCode());
+            String detail = response.body() == null ? "" : response.body();
+            if (detail.length() > 200) {
+                detail = detail.substring(0, 200);
+            }
+            markFailed(c, pending, "HTTP " + response.statusCode() + " " + detail);
             return;
         }
 

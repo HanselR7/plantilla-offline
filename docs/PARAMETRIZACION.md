@@ -17,4 +17,10 @@
 - [ ] Limpieza de sesiones vencidas en auth_session.
 - [ ] Sincronizar usuarios entre nube y local, para que sean las mismas credenciales.
 - [ ] Los tokens van en localStorage. En una app offline-first es lo habitual, pero un XSS los expondría, así que conviene un buen CSP más adelante.
-- [ ] /sync/push y /sync/pull abiertos (el 22B).
+- [x] /sync/push y /sync/pull abiertos (el 22B).
+- [ ] installation.sync_token está en texto plano en la base local; protegerlo (credential store o cifrado)
+- [ ] Entre el local y la nube debe usarse HTTPS en producción: el token viaja en un encabezado
+- [ ] Registro de instalaciones manual (admin de la nube + SQL en el local); automatizarlo en el instalador
+- [ ] Backoff de reintentos en OutboxRelay (hoy reintenta cada 10 s sin límite) y lista de operaciones fallidas visible
+- [ ] Limpiar outbox.last_error al enviar con éxito
+- [ ] AuthResource.me usa @Context ContainerRequestContext: mismo riesgo que causó el 500 en SyncResource

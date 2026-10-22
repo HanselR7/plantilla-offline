@@ -1,4 +1,4 @@
 embed-server --std-out=echo
 /subsystem=datasources/jdbc-driver=postgresql:add(driver-name=postgresql,driver-module-name=org.postgresql,driver-xa-datasource-class-name=org.postgresql.xa.PGXADataSource)
-data-source add --name=PlantillaDS --jndi-name=java:jboss/datasources/PlantillaDS --driver-name=postgresql --connection-url=jdbc:postgresql://localhost:5432/plantilla_local --user-name=plantilla --password=postgres --use-java-context=true --min-pool-size=2 --max-pool-size=20 --validate-on-match=true --valid-connection-checker-class-name=org.jboss.jca.adapters.jdbc.extensions.postgres.PostgreSQLValidConnectionChecker
+data-source add --name=PlantillaDS --jndi-name=java:jboss/datasources/PlantillaDS --driver-name=postgresql --connection-url=${env.PLANTILLA_DB_URL:jdbc:postgresql://localhost:5432/plantilla_local} --user-name=${env.PLANTILLA_DB_USER:plantilla} --password=${env.PLANTILLA_DB_PASSWORD} --use-java-context=true --min-pool-size=2 --max-pool-size=20 --validate-on-match=true --valid-connection-checker-class-name=org.jboss.jca.adapters.jdbc.extensions.postgres.PostgreSQLValidConnectionChecker
 stop-embedded-server

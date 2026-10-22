@@ -1,0 +1,4 @@
+embed-server --std-out=echo
+/subsystem=datasources/data-source=PlantillaDS:remove
+/subsystem=datasources/jdbc-driver=postgresql:remove
+stop-embedded-server

@@ -23,4 +23,4 @@ dist-ssr
 *.sln
 *.sw?
 
-installer/scripts/secrets.env
+/installer/scripts/secrets.env

@@ -1,6 +1,6 @@
 embed-server --std-out=echo
-/subsystem=elytron/key-store=plantillaKS:add(path=plantilla.p12,relative-to=jboss.server.config.dir,credential-reference={clear-text=cambiame123},type=PKCS12)
-/subsystem=elytron/key-manager=plantillaKM:add(key-store=plantillaKS,credential-reference={clear-text=cambiame123})
+/subsystem=elytron/key-store=plantillaKS:add(path=plantilla.p12,relative-to=jboss.server.config.dir,credential-reference={clear-text=${env.PLANTILLA_KEYSTORE_PASSWORD}},type=PKCS12)
+/subsystem=elytron/key-manager=plantillaKM:add(key-store=plantillaKS,credential-reference={clear-text=${env.PLANTILLA_KEYSTORE_PASSWORD}})
 /subsystem=elytron/server-ssl-context=plantillaSSL:add(key-manager=plantillaKM,protocols=["TLSv1.3","TLSv1.2"])
 /subsystem=undertow/server=default-server/https-listener=https:write-attribute(name=ssl-context,value=plantillaSSL)
 stop-embedded-server

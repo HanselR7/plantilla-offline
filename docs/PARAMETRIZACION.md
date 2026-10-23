@@ -24,3 +24,8 @@
 - [ ] Backoff de reintentos en OutboxRelay (hoy reintenta cada 10 s sin límite) y lista de operaciones fallidas visible
 - [ ] Limpiar outbox.last_error al enviar con éxito
 - [ ] AuthResource.me usa @Context ContainerRequestContext: mismo riesgo que causó el 500 en SyncResource
+- [ ] Instalador: el certificado HTTPS se genera con las IPs del momento; si el router cambia la IP, deja de coincidir (reservar IP o usar nombre)
+- [ ] Instalador: las claves del servicio están en PlantillaServer.xml con permisos restringidos; evaluar el credential store
+- [ ] Instalador: cloud_url y sync_token se configuran a mano tras instalar; automatizar en el asistente
+- [ ] Instalador: firmar el .exe y los scripts (certificado de firma de código)
+- [ ] Revisar licencias de lo redistribuido (WildFly, Temurin, PostgreSQL, WinSW)

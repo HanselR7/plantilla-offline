@@ -28,3 +28,6 @@ Thumbs.db
 # Frontend compilado copiado al WAR (generado)
 backend/bootstrap/src/main/webapp/*
 !backend/bootstrap/src/main/webapp/WEB-INF/
+
+/installer/scripts/secrets.env
+/installer/payload

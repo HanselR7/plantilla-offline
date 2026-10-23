@@ -29,3 +29,8 @@
 - [ ] Instalador: cloud_url y sync_token se configuran a mano tras instalar; automatizar en el asistente
 - [ ] Instalador: firmar el .exe y los scripts (certificado de firma de código)
 - [ ] Revisar licencias de lo redistribuido (WildFly, Temurin, PostgreSQL, WinSW)
+- [ ] Instalador: el .exe no está firmado; Windows mostrará "editor desconocido" (certificado de firma de código)
+- [ ] Instalador: si install.ps1 falla, el asistente solo avisa; falta revertir lo instalado
+- [ ] Instalador: pedir cloud_url y sync_token en el asistente y guardarlos en installation
+- [ ] Instalador: versión de la app y AppId definidos por proyecto
+- [ ] Instalador: probar upgrade (instalar sobre una versión anterior); hoy install.ps1 se niega si ya existe el servicio

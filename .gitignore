@@ -31,3 +31,4 @@ backend/bootstrap/src/main/webapp/*
 
 /installer/scripts/secrets.env
 /installer/payload
+/installer/output/

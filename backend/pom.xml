@@ -19,6 +19,7 @@
   </modules>
 
   <properties>
+    <mockito.version>5.12.0</mockito.version>
     <maven.compiler.release>21</maven.compiler.release>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <jakarta.ee.version>10.0.0</jakarta.ee.version>
@@ -28,6 +29,14 @@
 
   <dependencyManagement>
     <dependencies>
+      <!-- Borrar despues de las pruebas -->
+      <dependency>
+        <groupId>org.mockito</groupId>
+        <artifactId>mockito-core</artifactId>
+        <version>${mockito.version}</version>
+        <scope>test</scope>
+      </dependency>
+
       <!-- Módulos internos -->
       <dependency>
         <groupId>${project.groupId}</groupId>

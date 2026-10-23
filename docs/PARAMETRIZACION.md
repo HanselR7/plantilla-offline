@@ -34,3 +34,4 @@
 - [ ] Instalador: pedir cloud_url y sync_token en el asistente y guardarlos en installation
 - [ ] Instalador: versión de la app y AppId definidos por proyecto
 - [ ] Instalador: probar upgrade (instalar sobre una versión anterior); hoy install.ps1 se niega si ya existe el servicio
+- [ ] Pantalla de administración para ver y reintentar operaciones fallidas del outbox (hoy solo por SQL)

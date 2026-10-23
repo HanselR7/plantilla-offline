@@ -68,7 +68,7 @@ public class OutboxRelay {
     }
 
     private record Pending(UUID id, String type, UUID aggregateId, String operation,
-                           String payloadJson, UUID idempotencyKey) {
+                           String payloadJson, UUID idempotencyKey, int attempts) {
     }
 
     private String[] readInstallation(Connection c) throws SQLException {
@@ -81,12 +81,13 @@ public class OutboxRelay {
 
     private List<Pending> readPending(Connection c) throws SQLException {
         List<Pending> list = new ArrayList<>();
-        String sql = "select id, aggregate_type, aggregate_id, operation, payload::text, idempotency_key "
-                + "from outbox where sent_at is null order by created_at limit " + BATCH_SIZE;
+        String sql = "select id, aggregate_type, aggregate_id, operation, payload::text, idempotency_key, attempts "
+                + "from outbox where sent_at is null and failed_at is null and next_attempt_at <= now() "
+                + "order by created_at limit " + BATCH_SIZE;
         try (PreparedStatement ps = c.prepareStatement(sql); ResultSet rs = ps.executeQuery()) {
             while (rs.next()) {
                 list.add(new Pending(rs.getObject(1, UUID.class), rs.getString(2), rs.getObject(3, UUID.class),
-                        rs.getString(4), rs.getString(5), rs.getObject(6, UUID.class)));
+                        rs.getString(4), rs.getString(5), rs.getObject(6, UUID.class), rs.getInt(7)));
             }
         }
         return list;
@@ -119,7 +120,11 @@ public class OutboxRelay {
             if (detail.length() > 200) {
                 detail = detail.substring(0, 200);
             }
-            markFailed(c, pending, "HTTP " + response.statusCode() + " " + detail);
+            int code = response.statusCode();
+            boolean permanent = code >= 400 && code < 500
+                    && code != 401 && code != 403 && code != 404
+                    && code != 408 && code != 429;
+            markFailed(c, pending, "HTTP " + code + " " + detail, permanent);
             return;
         }
 
@@ -129,7 +134,7 @@ public class OutboxRelay {
     }
 
     private void markSent(Connection c, List<Pending> pending, List<String> confirmed) throws SQLException {
-        try (PreparedStatement ps = c.prepareStatement("update outbox set sent_at = now() where id = ?")) {
+        try (PreparedStatement ps = c.prepareStatement("update outbox set sent_at = now(), last_error = null where id = ?")) {
             for (Pending p : pending) {
                 if (confirmed.contains(p.idempotencyKey().toString())) {
                     ps.setObject(1, p.id());
@@ -140,12 +145,24 @@ public class OutboxRelay {
         }
     }
 
-    private void markFailed(Connection c, List<Pending> pending, String error) throws SQLException {
-        try (PreparedStatement ps = c.prepareStatement(
-                "update outbox set attempts = attempts + 1, last_error = ? where id = ?")) {
+    /** 10 s, 30 s, 1 min, 5 min, 15 min, 1 h (tope). */
+    private static final int[] BACKOFF_SECONDS = {10, 30, 60, 300, 900, 3600};
+
+    private void markFailed(Connection c, List<Pending> pending, String error, boolean permanent)
+            throws SQLException {
+        String sql = permanent
+                ? "update outbox set attempts = attempts + 1, last_error = ?, failed_at = now() where id = ?"
+                : "update outbox set attempts = attempts + 1, last_error = ?, "
+                  + "next_attempt_at = now() + (? * interval '1 second') where id = ?";
+        try (PreparedStatement ps = c.prepareStatement(sql)) {
             for (Pending p : pending) {
                 ps.setString(1, error);
-                ps.setObject(2, p.id());
+                if (permanent) {
+                    ps.setObject(2, p.id());
+                } else {
+                    ps.setInt(2, BACKOFF_SECONDS[Math.min(p.attempts(), BACKOFF_SECONDS.length - 1)]);
+                    ps.setObject(3, p.id());
+                }
                 ps.addBatch();
             }
             ps.executeBatch();

@@ -1,0 +1,8 @@
+**/node_modules
+**/target
+**/dist
+.git
+.idea
+installer/scripts/secrets.env
+backend/bootstrap/src/main/webapp/*
+!backend/bootstrap/src/main/webapp/WEB-INF/

@@ -85,4 +85,4 @@ begin
       Params := Params + ' -RemoveData';
     Exec('powershell.exe', Params, '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
   end;
-end;
+end;{BCF0DF78-7A45-4EB2-8335-C6BD4CB879ED}

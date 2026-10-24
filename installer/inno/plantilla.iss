@@ -31,6 +31,7 @@ Name: "spanish"; MessagesFile: "compiler:Languages\Spanish.isl"
 Source: "..\payload\*"; DestDir: "{tmp}\plantilla\payload"; Flags: deleteafterinstall ignoreversion recursesubdirs
 Source: "..\jboss\*"; DestDir: "{tmp}\plantilla\jboss"; Flags: deleteafterinstall ignoreversion
 Source: "..\scripts\install.ps1"; DestDir: "{tmp}\plantilla\scripts"; Flags: deleteafterinstall ignoreversion
+Source: "..\scripts\make-certs.ps1"; DestDir: "{tmp}\plantilla\scripts"; Flags: deleteafterinstall ignoreversion
 ; El desinstalador sí se queda en la instalación.
 Source: "..\scripts\uninstall.ps1"; DestDir: "{app}\scripts"; Flags: ignoreversion
 

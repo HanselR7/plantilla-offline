@@ -109,17 +109,22 @@ $env:PLANTILLA_KEYSTORE_PASSWORD = $ksPass
 $cli = Join-Path $wf 'bin\jboss-cli.bat'
 Invoke-Native $cli @("--file=$(Join-Path $jbossCfgDir 'datasource.cli')")
 
-Step 'Generando certificado HTTPS'
+Step 'Generando autoridad certificadora y certificado HTTPS'
 $ips = Get-NetIPAddress -AddressFamily IPv4 |
     Where-Object { $_.IPAddress -notlike '169.254.*' -and $_.IPAddress -ne '127.0.0.1' } |
     Select-Object -ExpandProperty IPAddress
-$san = @('dns:localhost', "dns:$env:COMPUTERNAME", 'ip:127.0.0.1') + ($ips | ForEach-Object { "ip:$_" })
-$keystore = Join-Path $wf 'standalone\configuration\plantilla.p12'
-Invoke-Native (Join-Path $jre 'bin\keytool.exe') @(
-    '-genkeypair', '-alias', 'plantilla', '-keyalg', 'RSA', '-keysize', '2048', '-validity', '825',
-    '-keystore', $keystore, '-storetype', 'PKCS12', '-storepass', $ksPass,
-    '-dname', 'CN=Plantilla Offline', '-ext', ('SAN=' + ($san -join ','))
-)
+$certDir = Join-Path $InstallDir 'certs'
+New-Item -ItemType Directory -Force $certDir | Out-Null
+$hostnames = @('localhost', $env:COMPUTERNAME)
+& (Join-Path $PSScriptRoot 'make-certs.ps1') -OutDir $certDir -Ips $ips -Hostnames $hostnames `
+    -KeystorePassword $ksPass -Keytool (Join-Path $jre 'bin\keytool.exe')
+
+$cfgDir = Join-Path $wf 'standalone\configuration'
+Copy-Item (Join-Path $certDir 'plantilla.p12') $cfgDir -Force
+Copy-Item (Join-Path $certDir 'plantilla-ca.crt') $cfgDir -Force
+Remove-Item (Join-Path $certDir 'plantilla.p12'), (Join-Path $certDir 'plantilla-ca.crt') -Force
+# ca.p12 (clave privada de la CA): solo SYSTEM y administradores.
+Invoke-Native 'icacls.exe' @($certDir, '/inheritance:r', '/grant:r', '*S-1-5-18:(OI)(CI)F', '*S-1-5-32-544:(OI)(CI)F')
 Invoke-Native $cli @("--file=$(Join-Path $jbossCfgDir 'https.cli')")
 
 Step 'Desplegando la aplicación'
@@ -188,6 +193,8 @@ Usuario administrador : admin
 Contraseña            : $adminPass
 Contraseña postgres   : $pgSuper   (puerto $PgPort)
 Dirección             : https://$env:COMPUTERNAME`:8443/plantilla-api/
+iPhone: abrir en Safari http://IP-DE-ESTA-PC:8080/plantilla-api/api/pki/ca
+        instalar el perfil y activarlo en Ajustes > General > Información > Certificados de confianza
 "@ | Set-Content -Path $info -Encoding ascii
 Invoke-Native 'icacls.exe' @($info, '/inheritance:r', '/grant:r', '*S-1-5-18:F', '*S-1-5-32-544:F')
 

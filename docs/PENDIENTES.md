@@ -35,3 +35,7 @@
 - [ ] Pruebas automáticas (hoy no hay)
 - [ ] Logging estructurado y manejo uniforme de errores
 - [ ] Limpiar avisos de IntelliJ (dialecto SQL) y de antd
+- [ ] Instalador: script para regenerar el certificado cuando cambie la IP
+- [ ] Instalador: mostrar un QR para descargar la CA desde el iPhone
+- [ ] Android: instalar la CA (flujo distinto; Chrome es más estricto)
+- [ ] Probar el flujo completo del instalador (CA incluida) en VM o Sandbox

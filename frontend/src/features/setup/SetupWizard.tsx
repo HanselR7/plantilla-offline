@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useCallback, useState } from 'react'
 import { Alert, Button, Card, Form, Input, Typography } from 'antd'
 import { useSettingsStore } from '../../core/config/useSettingsStore'
 import type { AppRole } from '../../core/config/useSettingsStore'
@@ -9,7 +9,9 @@ import { redeemPairingCode } from './pairingApi'
 import './SetupWizard.scss'
 import useApp from 'antd/es/app/useApp'
 import { discoverServer, rememberServer } from '../../core/connectivity/discovery'
-import { Progress } from 'antd'
+import { Modal, Progress } from 'antd'
+import { QrScanner } from './QrScanner'
+import { parsePairingQr } from './pairingQr'
 
 interface FormValues {
     localUrl?: string
@@ -47,6 +49,7 @@ export function SetupWizard() {
     const [step, setStep] = useState('')
     const [progress, setProgress] = useState(0)
     const [subnet, setSubnet] = useState('')
+    const [scanning, setScanning] = useState(false)
 
     const search = async () => {
         setSearching(true)
@@ -93,6 +96,17 @@ export function SetupWizard() {
         if (localUrl) rememberServer(localUrl)
         void useConnectionStore.getState().refresh()
     }
+
+    const onScan = useCallback((text: string) => {
+        setScanning(false)
+        const parsed = parsePairingQr(text)
+        if (!parsed) {
+            void message.error('Ese QR no es de este sistema')
+            return
+        }
+        form.setFieldsValue({ localUrl: parsed.api, pairCode: parsed.code })
+        void message.success('QR leído. Pulsa «Guardar y continuar».')
+    }, [form])
 
     if (!role) {
         return (
@@ -162,6 +176,10 @@ export function SetupWizard() {
                             value={subnet}
                             onChange={(e) => setSubnet(e.target.value)}
                         />
+
+                        <Button style={{ marginLeft: 8 }} onClick={() => setScanning(true)}>
+                            Escanear QR
+                        </Button>
                     </div>
                 )}
 
@@ -207,6 +225,15 @@ export function SetupWizard() {
                     <Button type="primary" htmlType="submit">Guardar y continuar</Button>
                 </div>
             </Form>
+            <Modal
+                title="Escanear código QR"
+                open={scanning}
+                footer={null}
+                onCancel={() => setScanning(false)}
+                destroyOnHidden
+            >
+                {scanning && <QrScanner onResult={onScan} />}
+            </Modal>
         </div>
     )
 }
